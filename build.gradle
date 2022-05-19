@@ -1,0 +1,105 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.4'
+    }
+}
+
+allprojects 
+{
+    apply plugin: 'java'
+    apply plugin: 'maven'
+    apply plugin: 'com.github.johnrengelman.shadow'
+    
+    group = group_name
+    version = app_version
+    archivesBaseName = app_id
+    
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+	
+	repositories {
+        mavenCentral()
+        maven { url "http://repo.maven.apache.org/maven2" }
+    }
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+    }
+}
+
+jar {
+    manifest {
+        attributes("Main-Class": project.main_class)
+    }
+}
+
+shadowJar {
+    dependencies {
+    }
+}
+
+build.dependsOn(shadowJar)
+
+dependencies {
+    compile 'commons-io:commons-io:1.2'
+    compile 'com.googlecode.json-simple:json-simple:1.1'
+    compile 'com.cedarsoftware:json-io:4.13.0'
+    testImplementation 'junit:junit:4.13'
+}
+
+processResources 
+{
+	inputs.property "app_version", project.app_version
+    
+	from(sourceSets.main.resources.srcDirs) 
+	{
+        include '**/*.info'
+        include '**/*.prop'
+
+        // replaces
+        expand ([
+            'app_version': project.app_version,
+            ])
+    }
+    from(sourceSets.main.resources.srcDirs) 
+	{
+        exclude '**/*.info'
+        exclude '**/*.prop'
+    }
+}
+
+task wrapper(type: Wrapper){
+	gradleVersion = '4.4.1'
+}
+
+test {
+    debug = true
+}
+
+task debug(dependsOn: classes, type: JavaExec) {
+    main = project.main_class
+    classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
+    workingDir = '../mods/_test/'
+    args = ["multisync.json"]
+    ignoreExitValue = true
+    debug = true
+}
+
+task copyJar {
+    doLast {
+        copy {
+            from shadowJar {
+                include '*-all.jar'
+            }
+            into '../mods/_test/'
+            rename { String fileName ->
+                fileName.replace("-$project.version", "").replace("mcserver-", "").replace("-all", "")
+            }
+        }
+    }
+}
+build.finalizedBy(copyJar)
