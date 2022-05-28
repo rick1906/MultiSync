@@ -37,7 +37,7 @@ Java library/application for synchronizing multiple directories. This library ca
 Configuration is divided to global (top-level) configuration and separate sync target "local" configuration. Sync targets use global configuration if no corresponding directives are defined in their own configuration. Relative paths are relative to config file by default. In sync target configuration relative paths are relative to target's root.
 
 - `targets` - Array of sync targets' configurations.
-- `backup` - Backup path (global, local). Backups are but in date-based subfolder.
+- `backup` - Backup path (global, local). Backups are put in date-based subfolder.
 - `list` - Filelist path (global, local).
 - `log` - Sync log (global).
 - `appendLog` - Append to log file, otherwise overwrite it (global).
