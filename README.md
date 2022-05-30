@@ -54,3 +54,28 @@ Configuration is divided to global (top-level) configuration and separate sync t
 
 ## Using as a library
 The synchronization process can be managed by `Controller` and `SyncList` classes. The former is used just to store sync targets, global configuration and globally used objects. The latter manages synchronization of provided elements as well as generating/saving resulting filelist. All information about single relative path to be synchronized between all targets is stored in `SyncElement` object.
+
+#### Example
+In default sync implementation the sync process is divided between three stages performed with the whole file trees: scanning (adding whole file tree to sync list), analyzing (choosing sync source files for each path) and synchronization (creating/replacing/deleting files). The example below demonstrates how the classes from this library can be used for consecutive per-file sync process, where analyzing and synchronization stages are performed for a single file just after it was detected by scanning.
+````java
+public SyncList consecutiveSync(Controller controller)
+{
+    SyncList list = new SyncList(controller.getTargets());
+    list.addAllTargets(false); // add roots non-recursively
+    for (int i = 0; i < controller.getTargets().length; ++i) {
+        list.startSync(i, controller.getGlobalOptions()); // initialize roots
+    }
+    int index = 0;
+    while (index < list.size()) {
+        SyncElement current = list.get(index);
+        if (current.analyze(controller.getGlobalOptions(), true)) {
+            current.sync(controller.getGlobalOptions()); // sync one element
+            list.addChildren(current, false); // for directories add child files non-recursively
+        }
+        index++;
+    }
+    list.saveFileLists(); // save local filelists
+    list.saveGlobalFileList(controller.getFileListContainer()); // save global filelist
+    return list;
+}
+````
